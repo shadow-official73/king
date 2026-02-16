@@ -1,0 +1,1591 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RAJVIR - Mining App</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --background: hsl(220, 20%, 7%);
+            --foreground: hsl(200, 20%, 90%);
+            --card: hsl(220, 18%, 11%);
+            --card-foreground: hsl(200, 20%, 90%);
+            --primary: #30C2E7;
+            --primary-foreground: hsl(220, 20%, 7%);
+            --secondary: hsl(220, 15%, 16%);
+            --secondary-foreground: hsl(200, 20%, 80%);
+            --muted-foreground: hsl(215, 15%, 55%);
+            --border: hsl(220, 15%, 20%);
+            --destructive: hsl(0, 70%, 50%);
+            --nav-background: hsl(220, 20%, 5%);
+            --mining-ring: hsl(220, 15%, 22%);
+            --mining-ring-active: #30C2E7;
+            --stat-card: hsl(220, 16%, 13%);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background-color: var(--background);
+            color: var(--foreground);
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 448px;
+            margin: 0 auto;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background-color: var(--background);
+        }
+
+        /* Header */
+        header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .logo {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 2px solid var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 18px;
+            color: var(--primary);
+        }
+
+        header h1 {
+            font-size: 20px;
+            font-weight: bold;
+            letter-spacing: 0.05em;
+        }
+
+        /* Main Content */
+        main {
+            flex: 1;
+            overflow-y: auto;
+            padding-bottom: 80px;
+        }
+
+        .page {
+            display: none;
+            padding: 24px 16px 16px;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        /* Bottom Navigation */
+        nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            max-width: 448px;
+            margin: 0 auto;
+            background: var(--nav-background);
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: space-around;
+            padding: 12px 8px;
+            z-index: 50;
+        }
+
+        nav button {
+            background: none;
+            border: none;
+            color: var(--muted-foreground);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 16px;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        nav button.active {
+            color: var(--primary);
+        }
+
+        nav button svg {
+            width: 22px;
+            height: 22px;
+        }
+
+        nav button span {
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        /* Home Page */
+        .points-display {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .points-display .points {
+            font-size: 48px;
+            font-weight: bold;
+        }
+
+        .points-display .label {
+            color: var(--muted-foreground);
+            font-size: 14px;
+            margin-top: 4px;
+        }
+
+        .mining-circle-outer {
+            width: 208px;
+            height: 208px;
+            border-radius: 50%;
+            background: radial-gradient(circle, var(--card) 60%, var(--secondary) 100%);
+            box-shadow: 0 0 0 4px var(--mining-ring), 0 0 30px hsla(192, 80%, 55%, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 24px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .mining-circle-outer.active {
+            box-shadow: 0 0 0 4px var(--mining-ring-active), 0 0 40px hsla(192, 80%, 55%, 0.3);
+            animation: pulse-glow 2s infinite;
+        }
+
+        @keyframes pulse-glow {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+        }
+
+        .mining-inner {
+            width: 112px;
+            height: 112px;
+            border-radius: 50%;
+            background: var(--card);
+            box-shadow: 0 0 0 3px hsla(192, 80%, 55%, 0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+            font-weight: bold;
+            color: var(--primary);
+        }
+
+        .mining-status {
+            text-align: center;
+            color: var(--muted-foreground);
+            font-size: 14px;
+            margin-bottom: 12px;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: var(--primary-foreground);
+            border: none;
+            padding: 10px 32px;
+            border-radius: 24px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: opacity 0.2s;
+            display: block;
+            margin: 0 auto;
+        }
+
+        .btn-primary:hover {
+            opacity: 0.9;
+        }
+
+        .btn-destructive {
+            background: var(--destructive);
+            color: white;
+            border: none;
+            padding: 10px 32px;
+            border-radius: 24px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: opacity 0.2s;
+            display: block;
+            margin: 0 auto;
+        }
+
+        .btn-destructive:hover {
+            opacity: 0.9;
+        }
+
+        .info-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px;
+            margin-top: 32px;
+        }
+
+        .info-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+
+        .info-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--secondary-foreground);
+            font-size: 14px;
+        }
+
+        .info-value {
+            color: var(--primary);
+            font-family: monospace;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: var(--secondary);
+            border-radius: 3px;
+            overflow: hidden;
+            margin-bottom: 8px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--primary);
+            border-radius: 3px;
+            transition: width 1s;
+        }
+
+        .progress-info {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: var(--muted-foreground);
+        }
+
+        /* Recharge Page */
+        .page-title {
+            font-weight: bold;
+            font-size: 18px;
+            margin-bottom: 16px;
+            letter-spacing: 0.05em;
+        }
+
+        .points-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .points-card-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--secondary-foreground);
+            font-size: 14px;
+        }
+
+        .points-card-value {
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .recharge-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 24px;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 4px;
+            font-weight: 600;
+        }
+
+        .card-subtitle {
+            color: var(--muted-foreground);
+            font-size: 12px;
+            margin-bottom: 16px;
+        }
+
+        input[type="tel"], input[type="password"], input[type="text"] {
+            width: 100%;
+            background: var(--secondary);
+            color: var(--foreground);
+            border: none;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            outline: none;
+            margin-bottom: 4px;
+        }
+
+        input[type="tel"]:focus, input[type="password"]:focus, input[type="text"]:focus {
+            box-shadow: 0 0 0 1px var(--primary);
+        }
+
+        input::placeholder {
+            color: var(--muted-foreground);
+        }
+
+        .char-count {
+            color: var(--muted-foreground);
+            font-size: 12px;
+            margin-bottom: 16px;
+        }
+
+        .message {
+            font-size: 12px;
+            margin-bottom: 12px;
+        }
+
+        .message.success {
+            color: #4ade80;
+        }
+
+        .message.error {
+            color: var(--destructive);
+        }
+
+        .btn-secondary {
+            width: 100%;
+            background: var(--secondary);
+            color: var(--muted-foreground);
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-secondary:hover {
+            background: var(--primary);
+            color: var(--primary-foreground);
+        }
+
+        .section-title {
+            font-weight: bold;
+            font-size: 14px;
+            margin-bottom: 12px;
+            letter-spacing: 0.05em;
+        }
+
+        .history-item {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px;
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .history-number {
+            color: var(--secondary-foreground);
+            font-size: 14px;
+        }
+
+        .history-date {
+            color: var(--muted-foreground);
+            font-size: 12px;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: var(--muted-foreground);
+            font-size: 14px;
+            padding: 24px 0;
+        }
+
+        /* Profile Page */
+        .profile-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 32px;
+        }
+
+        .avatar {
+            width: 112px;
+            height: 112px;
+            border-radius: 50%;
+            border: 2px solid var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+            font-weight: 300;
+            color: var(--primary);
+            margin-bottom: 16px;
+            overflow: hidden;
+        }
+
+        .avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .btn-upload {
+            color: var(--primary);
+            font-size: 14px;
+            border: 1px solid var(--primary);
+            background: none;
+            padding: 6px 16px;
+            border-radius: 24px;
+            cursor: pointer;
+            margin-bottom: 16px;
+            transition: all 0.2s;
+        }
+
+        .btn-upload:hover {
+            background: var(--primary);
+            color: var(--primary-foreground);
+        }
+
+        .username-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 32px;
+        }
+
+        .username {
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .username-input {
+            background: var(--secondary);
+            color: var(--foreground);
+            border: none;
+            padding: 4px 12px;
+            border-radius: 8px;
+            font-size: 20px;
+            font-weight: bold;
+            text-align: center;
+            outline: none;
+        }
+
+        .username-input:focus {
+            box-shadow: 0 0 0 1px var(--primary);
+        }
+
+        .btn-edit {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            color: var(--muted-foreground);
+            transition: color 0.2s;
+        }
+
+        .btn-edit:hover {
+            color: var(--primary);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            width: 100%;
+        }
+
+        .stat-card {
+            background: var(--stat-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .stat-icon {
+            color: var(--primary);
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .stat-label {
+            color: var(--muted-foreground);
+            font-size: 12px;
+            text-align: center;
+            margin-top: 4px;
+        }
+
+        /* Settings Page */
+        .settings-item {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            margin-bottom: 12px;
+            transition: border-color 0.2s;
+        }
+
+        .settings-item:hover {
+            border-color: hsla(192, 80%, 55%, 0.3);
+        }
+
+        .settings-item.logout:hover {
+            border-color: hsla(0, 70%, 50%, 0.3);
+        }
+
+        .settings-item-content {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .settings-item-icon {
+            color: var(--muted-foreground);
+        }
+
+        .settings-item-text {
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .language-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .language-btn {
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+        }
+
+        .language-btn.active {
+            background: hsla(192, 80%, 55%, 0.2);
+            color: var(--primary);
+            border-color: hsla(192, 80%, 55%, 0.4);
+        }
+
+        .language-btn:not(.active) {
+            background: var(--secondary);
+            color: var(--muted-foreground);
+        }
+
+        .language-btn:not(.active):hover {
+            color: var(--foreground);
+        }
+
+        .chevron {
+            color: var(--muted-foreground);
+            transition: transform 0.2s;
+        }
+
+        .chevron.rotate {
+            transform: rotate(90deg);
+        }
+
+        .expandable-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+
+        .expandable-content.show {
+            max-height: 500px;
+        }
+
+        .password-form {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+        }
+
+        .password-form input {
+            margin-bottom: 12px;
+        }
+
+        /* Utility */
+        .hidden {
+            display: none !important;
+        }
+
+        .center {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .mb-3 {
+            margin-bottom: 12px;
+        }
+
+        .mb-4 {
+            margin-bottom: 16px;
+        }
+
+        .mb-5 {
+            margin-bottom: 20px;
+        }
+
+        .mt-2 {
+            margin-top: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header>
+            <div class="logo">R</div>
+            <h1>RAJVIR</h1>
+        </header>
+
+        <!-- Main Content -->
+        <main>
+            <!-- Home Page -->
+            <div id="home" class="page active">
+                <div class="center">
+                    <div class="points-display">
+                        <div class="points" id="homePoints">0</div>
+                        <div class="label" data-i18n="totalPoints">Total Points</div>
+                    </div>
+
+                    <div class="mining-circle-outer" id="miningCircle">
+                        <div class="mining-inner">R</div>
+                    </div>
+
+                    <p class="mining-status" id="miningStatus" data-i18n="tapToStart">Tap to start mining</p>
+                    <button class="btn-primary hidden" id="startMiningBtn" data-i18n="startMining">Start Mining</button>
+                    <button class="btn-destructive hidden" id="stopMiningBtn" data-i18n="stopMining">Stop Mining</button>
+
+                    <div class="info-card">
+                        <div class="info-row mb-3" style="margin-bottom: 4px;">
+                            <span class="info-label" style="font-weight: 600;" data-i18n="dailyMiningTarget">Daily Mining Target: 5 Hours</span>
+                        </div>
+                        <p class="card-subtitle" data-i18n="complete5Hours">Complete 5 hours of mining to earn 1 Point</p>
+                        
+                        <div class="info-row" style="margin-bottom: 8px;">
+                            <div class="info-label">
+                                <span>⏱</span>
+                                <span data-i18n="timeMinedToday">Time mined today</span>
+                            </div>
+                            <div class="info-value" id="timeDisplay">00:00:00</div>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progressBar"></div>
+                        </div>
+                        <div class="progress-info">
+                            <span id="remainingText"></span>
+                            <span data-i18n="resetsAt">Resets at 12:00 AM</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recharge Page -->
+            <div id="recharge" class="page">
+                <h2 class="page-title" data-i18n="mobileRecharge">MOBILE RECHARGE</h2>
+
+                <div class="points-card">
+                    <div class="points-card-label">
+                        <span>⚡</span>
+                        <span data-i18n="currentPoints">Current Points</span>
+                    </div>
+                    <div class="points-card-value" id="rechargePoints">0</div>
+                </div>
+
+                <div class="recharge-card">
+                    <div class="card-header">
+                        <span>📱</span>
+                        <span data-i18n="mobileRechargeTitle">Mobile Recharge</span>
+                    </div>
+                    <p class="card-subtitle" data-i18n="pointsRequired">28 Points Required</p>
+
+                    <input 
+                        type="tel" 
+                        id="mobileInput" 
+                        maxlength="10" 
+                        data-i18n-placeholder="enterMobile"
+                        placeholder="Enter 10 Digit Mobile Number"
+                    />
+                    <p class="char-count" id="charCount">0/10</p>
+
+                    <p id="rechargeMessage" class="message hidden"></p>
+
+                    <button class="btn-secondary" onclick="handleRecharge()">
+                        <span data-i18n="rechargeNow">Recharge Now (28 pts)</span>
+                    </button>
+                </div>
+
+                <h3 class="section-title" data-i18n="rechargeHistory">RECHARGE HISTORY</h3>
+                <div id="historyContainer"></div>
+            </div>
+
+            <!-- Profile Page -->
+            <div id="profile" class="page">
+                <div class="profile-container">
+                    <div class="avatar" id="avatarContainer">
+                        <span id="avatarLetter">U</span>
+                    </div>
+                    <label class="btn-upload">
+                        <span data-i18n="uploadAvatar">Upload Avatar</span>
+                        <input type="file" accept="image/*" style="display: none;" onchange="handleAvatarUpload(event)">
+                    </label>
+
+                    <div class="username-container">
+                        <span class="username" id="usernameDisplay">User</span>
+                        <input type="text" class="username-input hidden" id="usernameInput" />
+                        <button class="btn-edit" onclick="toggleEditUsername()">✏️</button>
+                    </div>
+
+                    <h3 class="page-title" style="align-self: flex-start;" data-i18n="yourStats">YOUR STATS</h3>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <svg class="stat-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="8" r="7"/>
+                                <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/>
+                            </svg>
+                            <div class="stat-value" id="profilePoints">0</div>
+                            <div class="stat-label" data-i18n="totalPoints">Total Points</div>
+                        </div>
+                        <div class="stat-card">
+                            <svg class="stat-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                                <line x1="16" y1="2" x2="16" y2="6"/>
+                                <line x1="8" y1="2" x2="8" y2="6"/>
+                                <line x1="3" y1="10" x2="21" y2="10"/>
+                            </svg>
+                            <div class="stat-value" id="activeDays">0</div>
+                            <div class="stat-label" data-i18n="daysActive">Days Active</div>
+                        </div>
+                        <div class="stat-card">
+                            <svg class="stat-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="5" y="2" width="14" height="20" rx="2" ry="2"/>
+                                <line x1="12" y1="18" x2="12.01" y2="18"/>
+                            </svg>
+                            <div class="stat-value" id="totalRecharges">0</div>
+                            <div class="stat-label" data-i18n="totalRecharges">Total Recharges</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings Page -->
+            <div id="settings" class="page">
+                <h2 class="page-title" data-i18n="settingsTitle">SETTINGS</h2>
+
+                <!-- Language Selector -->
+                <div class="settings-item" onclick="toggleLanguageSelector()">
+                    <div class="settings-item-content">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"/>
+                            <line x1="2" y1="12" x2="22" y2="12"/>
+                            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+                        </svg>
+                        <span class="settings-item-text" data-i18n="language">Language</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span class="settings-item-text" style="color: var(--muted-foreground);" id="currentLanguage">English</span>
+                        <svg class="chevron" id="langChevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="9 18 15 12 9 6"/>
+                        </svg>
+                    </div>
+                </div>
+                <div class="expandable-content" id="languageContent">
+                    <div class="recharge-card">
+                        <div class="language-grid" id="languageGrid"></div>
+                    </div>
+                </div>
+
+                <!-- Change Password -->
+                <div class="settings-item" onclick="togglePasswordForm()">
+                    <div class="settings-item-content">
+                        <svg class="settings-item-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                        </svg>
+                        <span class="settings-item-text" data-i18n="changePassword">Change Password</span>
+                    </div>
+                    <svg class="chevron" id="pwChevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="9 18 15 12 9 6"/>
+                    </svg>
+                </div>
+                <div class="expandable-content" id="passwordContent">
+                    <div class="password-form">
+                        <input type="password" id="currentPassword" data-i18n-placeholder="currentPassword" placeholder="Current Password" />
+                        <input type="password" id="newPassword" data-i18n-placeholder="newPassword" placeholder="New Password" />
+                        <p id="passwordMessage" class="message hidden"></p>
+                        <button class="btn-primary" style="width: 100%;" onclick="handleChangePassword()">
+                            <span data-i18n="savePassword">Save Password</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Logout -->
+                <div class="settings-item logout" style="margin-top: 24px;" onclick="handleLogout()">
+                    <div class="settings-item-content">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--destructive);">
+                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                            <polyline points="16 17 21 12 16 7"/>
+                            <line x1="21" y1="12" x2="9" y2="12"/>
+                        </svg>
+                        <span class="settings-item-text" style="color: var(--destructive);" data-i18n="logout">Logout</span>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Bottom Navigation -->
+        <nav>
+            <button class="active" onclick="switchTab('home')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                    <polyline points="9 22 9 12 15 12 15 22"/>
+                </svg>
+                <span data-i18n="home">Home</span>
+            </button>
+            <button onclick="switchTab('recharge')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="5" y="2" width="14" height="20" rx="2" ry="2"/>
+                    <line x1="12" y1="18" x2="12.01" y2="18"/>
+                </svg>
+                <span data-i18n="recharge">Recharge</span>
+            </button>
+            <button onclick="switchTab('profile')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                    <circle cx="12" cy="7" r="4"/>
+                </svg>
+                <span data-i18n="profile">Profile</span>
+            </button>
+            <button onclick="switchTab('settings')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="3"/>
+                    <path d="M12 1v6m0 6v6m5.2-13.2l-4.2 4.2m-2.8 2.8l-4.2 4.2m13.2-5.2l-4.2-4.2m-2.8-2.8l-4.2-4.2"/>
+                </svg>
+                <span data-i18n="settings">Settings</span>
+            </button>
+        </nav>
+    </div>
+
+    <script>
+        // Translations
+        const translations = {
+            "English": {
+                "appName": "RAJVIR",
+                "home": "Home",
+                "recharge": "Recharge",
+                "profile": "Profile",
+                "settings": "Settings",
+                "totalPoints": "Total Points",
+                "dailyTargetReached": "Daily target reached! ✅",
+                "miningInProgress": "Mining in progress...",
+                "tapToStart": "Tap to start mining",
+                "startMining": "Start Mining",
+                "stopMining": "Stop Mining",
+                "dailyMiningTarget": "Daily Mining Target: 5 Hours",
+                "complete5Hours": "Complete 5 hours of mining to earn 1 Point",
+                "timeMinedToday": "Time mined today",
+                "targetComplete": "Target complete!",
+                "remaining": "Remaining",
+                "resetsAt": "Resets at 12:00 AM",
+                "mobileRecharge": "MOBILE RECHARGE",
+                "currentPoints": "Current Points",
+                "mobileRechargeTitle": "Mobile Recharge",
+                "pointsRequired": "28 Points Required",
+                "enterMobile": "Enter 10 Digit Mobile Number",
+                "rechargeNow": "Recharge Now (28 pts)",
+                "rechargeHistory": "RECHARGE HISTORY",
+                "noHistory": "No recharge history yet",
+                "validNumber": "Enter a valid 10-digit number",
+                "notEnoughPoints": "Not enough points! Need 28 points.",
+                "rechargeSuccess": "Recharge successful!",
+                "uploadAvatar": "Upload Avatar",
+                "yourStats": "YOUR STATS",
+                "daysActive": "Days Active",
+                "totalRecharges": "Total Recharges",
+                "settingsTitle": "SETTINGS",
+                "language": "Language",
+                "changePassword": "Change Password",
+                "currentPassword": "Current Password",
+                "newPassword": "New Password",
+                "savePassword": "Save Password",
+                "incorrectPassword": "Current password is incorrect",
+                "passwordTooShort": "Password must be at least 4 characters",
+                "passwordChanged": "Password changed successfully!",
+                "logout": "Logout"
+            },
+            "हिन्दी": {
+                "appName": "RAJVIR",
+                "home": "होम",
+                "recharge": "रिचार्ज",
+                "profile": "प्रोफ़ाइल",
+                "settings": "सेटिंग्स",
+                "totalPoints": "कुल अंक",
+                "dailyTargetReached": "दैनिक लक्ष्य पूरा! ✅",
+                "miningInProgress": "माइनिंग जारी है...",
+                "tapToStart": "माइनिंग शुरू करने के लिए टैप करें",
+                "startMining": "माइनिंग शुरू करें",
+                "stopMining": "माइनिंग रोकें",
+                "dailyMiningTarget": "दैनिक माइनिंग लक्ष्य: 5 घंटे",
+                "complete5Hours": "1 अंक कमाने के लिए 5 घंटे माइनिंग पूरी करें",
+                "timeMinedToday": "आज की माइनिंग समय",
+                "targetComplete": "लक्ष्य पूरा!",
+                "remaining": "शेष",
+                "resetsAt": "12:00 AM पर रीसेट",
+                "mobileRecharge": "मोबाइल रिचार्ज",
+                "currentPoints": "वर्तमान अंक",
+                "mobileRechargeTitle": "मोबाइल रिचार्ज",
+                "pointsRequired": "28 अंक आवश्यक",
+                "enterMobile": "10 अंकों का मोबाइल नंबर दर्ज करें",
+                "rechargeNow": "अभी रिचार्ज करें (28 अंक)",
+                "rechargeHistory": "रिचार्ज इतिहास",
+                "noHistory": "अभी तक कोई रिचार्ज इतिहास नहीं",
+                "validNumber": "एक मान्य 10 अंकों का नंबर दर्ज करें",
+                "notEnoughPoints": "पर्याप्त अंक नहीं! 28 अंक चाहिए।",
+                "rechargeSuccess": "रिचार्ज सफल!",
+                "uploadAvatar": "अवतार अपलोड करें",
+                "yourStats": "आपके आँकड़े",
+                "daysActive": "सक्रिय दिन",
+                "totalRecharges": "कुल रिचार्ज",
+                "settingsTitle": "सेटिंग्स",
+                "language": "भाषा",
+                "changePassword": "पासवर्ड बदलें",
+                "currentPassword": "वर्तमान पासवर्ड",
+                "newPassword": "नया पासवर्ड",
+                "savePassword": "पासवर्ड सहेजें",
+                "incorrectPassword": "वर्तमान पासवर्ड गलत है",
+                "passwordTooShort": "पासवर्ड कम से कम 4 अक्षर का होना चाहिए",
+                "passwordChanged": "पासवर्ड सफलतापूर्वक बदला गया!",
+                "logout": "लॉगआउट"
+            },
+            "ਪੰਜਾਬੀ": {
+                "appName": "RAJVIR",
+                "home": "ਹੋਮ",
+                "recharge": "ਰੀਚਾਰਜ",
+                "profile": "ਪ੍ਰੋਫਾਈਲ",
+                "settings": "ਸੈਟਿੰਗਾਂ",
+                "totalPoints": "ਕੁੱਲ ਅੰਕ",
+                "dailyTargetReached": "ਰੋਜ਼ਾਨਾ ਟੀਚਾ ਪੂਰਾ! ✅",
+                "miningInProgress": "ਮਾਈਨਿੰਗ ਜਾਰੀ ਹੈ...",
+                "tapToStart": "ਮਾਈਨਿੰਗ ਸ਼ੁਰੂ ਕਰਨ ਲਈ ਟੈਪ ਕਰੋ",
+                "startMining": "ਮਾਈਨਿੰਗ ਸ਼ੁਰੂ ਕਰੋ",
+                "stopMining": "ਮਾਈਨਿੰਗ ਰੋਕੋ",
+                "dailyMiningTarget": "ਰੋਜ਼ਾਨਾ ਮਾਈਨਿੰਗ ਟੀਚਾ: 5 ਘੰਟੇ",
+                "complete5Hours": "1 ਅੰਕ ਕਮਾਉਣ ਲਈ 5 ਘੰਟੇ ਮਾਈਨਿੰਗ ਪੂਰੀ ਕਰੋ",
+                "timeMinedToday": "ਅੱਜ ਦਾ ਮਾਈਨਿੰਗ ਸਮਾਂ",
+                "targetComplete": "ਟੀਚਾ ਪੂਰਾ!",
+                "remaining": "ਬਾਕੀ",
+                "resetsAt": "12:00 AM ਤੇ ਰੀਸੈਟ",
+                "mobileRecharge": "ਮੋਬਾਈਲ ਰੀਚਾਰਜ",
+                "currentPoints": "ਮੌਜੂਦਾ ਅੰਕ",
+                "mobileRechargeTitle": "ਮੋਬਾਈਲ ਰੀਚਾਰਜ",
+                "pointsRequired": "28 ਅੰਕ ਲੋੜੀਂਦੇ",
+                "enterMobile": "10 ਅੰਕਾਂ ਦਾ ਮੋਬਾਈਲ ਨੰਬਰ ਦਾਖਲ ਕਰੋ",
+                "rechargeNow": "ਹੁਣੇ ਰੀਚਾਰਜ ਕਰੋ (28 ਅੰਕ)",
+                "rechargeHistory": "ਰੀਚਾਰਜ ਇਤਿਹਾਸ",
+                "noHistory": "ਅਜੇ ਤੱਕ ਕੋਈ ਰੀਚਾਰਜ ਇਤਿਹਾਸ ਨਹੀਂ",
+                "validNumber": "ਇੱਕ ਸਹੀ 10 ਅੰਕਾਂ ਦਾ ਨੰਬਰ ਦਾਖਲ ਕਰੋ",
+                "notEnoughPoints": "ਕਾਫ਼ੀ ਅੰਕ ਨਹੀਂ! 28 ਅੰਕ ਚਾਹੀਦੇ।",
+                "rechargeSuccess": "ਰੀਚਾਰਜ ਸਫਲ!",
+                "uploadAvatar": "ਅਵਤਾਰ ਅੱਪਲੋਡ ਕਰੋ",
+                "yourStats": "ਤੁਹਾਡੇ ਅੰਕੜੇ",
+                "daysActive": "ਸਰਗਰਮ ਦਿਨ",
+                "totalRecharges": "ਕੁੱਲ ਰੀਚਾਰਜ",
+                "settingsTitle": "ਸੈਟਿੰਗਾਂ",
+                "language": "ਭਾਸ਼ਾ",
+                "changePassword": "ਪਾਸਵਰਡ ਬਦਲੋ",
+                "currentPassword": "ਮੌਜੂਦਾ ਪਾਸਵਰਡ",
+                "newPassword": "ਨਵਾਂ ਪਾਸਵਰਡ",
+                "savePassword": "ਪਾਸਵਰਡ ਸੇਵ ਕਰੋ",
+                "incorrectPassword": "ਮੌਜੂਦਾ ਪਾਸਵਰਡ ਗਲਤ ਹੈ",
+                "passwordTooShort": "ਪਾਸਵਰਡ ਘੱਟੋ ਘੱਟ 4 ਅੱਖਰਾਂ ਦਾ ਹੋਣਾ ਚਾਹੀਦਾ",
+                "passwordChanged": "ਪਾਸਵਰਡ ਸਫਲਤਾਪੂਰਵਕ ਬਦਲ ਗਿਆ!",
+                "logout": "ਲੌਗਆਊਟ"
+            },
+            "Español": {
+                "appName": "RAJVIR",
+                "home": "Inicio",
+                "recharge": "Recarga",
+                "profile": "Perfil",
+                "settings": "Ajustes",
+                "totalPoints": "Puntos Totales",
+                "dailyTargetReached": "¡Meta diaria alcanzada! ✅",
+                "miningInProgress": "Minería en progreso...",
+                "tapToStart": "Toca para comenzar a minar",
+                "startMining": "Iniciar Minería",
+                "stopMining": "Detener Minería",
+                "dailyMiningTarget": "Meta Diaria de Minería: 5 Horas",
+                "complete5Hours": "Completa 5 horas de minería para ganar 1 Punto",
+                "timeMinedToday": "Tiempo minado hoy",
+                "targetComplete": "¡Meta completa!",
+                "remaining": "Restante",
+                "resetsAt": "Se reinicia a las 12:00 AM",
+                "mobileRecharge": "RECARGA MÓVIL",
+                "currentPoints": "Puntos Actuales",
+                "mobileRechargeTitle": "Recarga Móvil",
+                "pointsRequired": "28 Puntos Requeridos",
+                "enterMobile": "Ingresa número de 10 dígitos",
+                "rechargeNow": "Recargar Ahora (28 pts)",
+                "rechargeHistory": "HISTORIAL DE RECARGAS",
+                "noHistory": "Sin historial de recargas",
+                "validNumber": "Ingresa un número válido de 10 dígitos",
+                "notEnoughPoints": "¡Puntos insuficientes! Necesitas 28.",
+                "rechargeSuccess": "¡Recarga exitosa!",
+                "uploadAvatar": "Subir Avatar",
+                "yourStats": "TUS ESTADÍSTICAS",
+                "daysActive": "Días Activos",
+                "totalRecharges": "Total Recargas",
+                "settingsTitle": "AJUSTES",
+                "language": "Idioma",
+                "changePassword": "Cambiar Contraseña",
+                "currentPassword": "Contraseña Actual",
+                "newPassword": "Nueva Contraseña",
+                "savePassword": "Guardar Contraseña",
+                "incorrectPassword": "La contraseña actual es incorrecta",
+                "passwordTooShort": "La contraseña debe tener al menos 4 caracteres",
+                "passwordChanged": "¡Contraseña cambiada exitosamente!",
+                "logout": "Cerrar Sesión"
+            },
+            "Français": {
+                "appName": "RAJVIR",
+                "home": "Accueil",
+                "recharge": "Recharge",
+                "profile": "Profil",
+                "settings": "Paramètres",
+                "totalPoints": "Points Totaux",
+                "dailyTargetReached": "Objectif quotidien atteint ! ✅",
+                "miningInProgress": "Minage en cours...",
+                "tapToStart": "Appuyez pour commencer le minage",
+                "startMining": "Démarrer le Minage",
+                "stopMining": "Arrêter le Minage",
+                "dailyMiningTarget": "Objectif Quotidien: 5 Heures",
+                "complete5Hours": "Complétez 5 heures de minage pour gagner 1 Point",
+                "timeMinedToday": "Temps miné aujourd'hui",
+                "targetComplete": "Objectif atteint !",
+                "remaining": "Restant",
+                "resetsAt": "Réinitialisation à 00h00",
+                "mobileRecharge": "RECHARGE MOBILE",
+                "currentPoints": "Points Actuels",
+                "mobileRechargeTitle": "Recharge Mobile",
+                "pointsRequired": "28 Points Requis",
+                "enterMobile": "Entrez un numéro à 10 chiffres",
+                "rechargeNow": "Recharger (28 pts)",
+                "rechargeHistory": "HISTORIQUE DES RECHARGES",
+                "noHistory": "Aucun historique de recharge",
+                "validNumber": "Entrez un numéro valide à 10 chiffres",
+                "notEnoughPoints": "Points insuffisants ! 28 requis.",
+                "rechargeSuccess": "Recharge réussie !",
+                "uploadAvatar": "Télécharger Avatar",
+                "yourStats": "VOS STATISTIQUES",
+                "daysActive": "Jours Actifs",
+                "totalRecharges": "Total Recharges",
+                "settingsTitle": "PARAMÈTRES",
+                "language": "Langue",
+                "changePassword": "Changer le Mot de Passe",
+                "currentPassword": "Mot de Passe Actuel",
+                "newPassword": "Nouveau Mot de Passe",
+                "savePassword": "Enregistrer",
+                "incorrectPassword": "Le mot de passe actuel est incorrect",
+                "passwordTooShort": "Le mot de passe doit contenir au moins 4 caractères",
+                "passwordChanged": "Mot de passe changé avec succès !",
+                "logout": "Déconnexion"
+            }
+        };
+
+        const MINING_TARGET_SECONDS = 5 * 3600; // 5 hours
+
+        // State management
+        let state = {
+            points: parseInt(localStorage.getItem('totalPoints') || '0'),
+            isMining: !!localStorage.getItem('miningStart'),
+            elapsedSeconds: 0,
+            miningInterval: null,
+            currentLanguage: localStorage.getItem('language') || 'English'
+        };
+
+        // Translation function
+        function t(key) {
+            return translations[state.currentLanguage]?.[key] || translations['English'][key] || key;
+        }
+
+        function updateTranslations() {
+            // Update all elements with data-i18n attribute
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                el.textContent = t(key);
+            });
+
+            // Update placeholders
+            document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+                const key = el.getAttribute('data-i18n-placeholder');
+                el.placeholder = t(key);
+            });
+
+            // Update current language display
+            document.getElementById('currentLanguage').textContent = state.currentLanguage;
+
+            // Re-render dynamic content
+            updateMiningUI();
+            updateRechargeHistory();
+        }
+
+        // Initialize app
+        function init() {
+            updatePoints();
+            initHomePage();
+            initRechargePage();
+            initProfilePage();
+            initSettingsPage();
+            updateTranslations();
+        }
+
+        // Home Page Functions
+        function initHomePage() {
+            const miningCircle = document.getElementById('miningCircle');
+            const startBtn = document.getElementById('startMiningBtn');
+            const stopBtn = document.getElementById('stopMiningBtn');
+            
+            miningCircle.addEventListener('click', () => {
+                if (!state.isMining && !isTargetReached()) {
+                    startMining();
+                }
+            });
+
+            startBtn.addEventListener('click', startMining);
+            stopBtn.addEventListener('click', stopMining);
+
+            checkMidnightReset();
+            
+            if (state.isMining) {
+                state.elapsedSeconds = getTodaySeconds();
+                startMiningInterval();
+            } else {
+                state.elapsedSeconds = getTodaySeconds();
+            }
+
+            updateMiningUI();
+        }
+
+        function checkMidnightReset() {
+            const lastReset = localStorage.getItem('lastMiningReset');
+            const today = new Date().toDateString();
+            if (lastReset !== today) {
+                localStorage.removeItem('miningStart');
+                localStorage.setItem('lastMiningReset', today);
+                localStorage.setItem('todayMiningSeconds', '0');
+                state.isMining = false;
+                state.elapsedSeconds = 0;
+            }
+        }
+
+        function getTodaySeconds() {
+            const saved = parseInt(localStorage.getItem('todayMiningSeconds') || '0');
+            const start = localStorage.getItem('miningStart');
+            if (!start) return saved;
+            const sessionElapsed = Math.floor((Date.now() - parseInt(start)) / 1000);
+            return saved + sessionElapsed;
+        }
+
+        function isTargetReached() {
+            return getTodaySeconds() >= MINING_TARGET_SECONDS;
+        }
+
+        function startMining() {
+            checkMidnightReset();
+            if (isTargetReached()) return;
+
+            localStorage.setItem('miningStart', String(Date.now()));
+            state.isMining = true;
+            state.elapsedSeconds = getTodaySeconds();
+            
+            // Track active days
+            const today = new Date().toDateString();
+            const activeDays = JSON.parse(localStorage.getItem('activeDays') || '[]');
+            if (!activeDays.includes(today)) {
+                activeDays.push(today);
+                localStorage.setItem('activeDays', JSON.stringify(activeDays));
+            }
+
+            startMiningInterval();
+            updateMiningUI();
+        }
+
+        function stopMining() {
+            const total = getTodaySeconds();
+            localStorage.setItem('todayMiningSeconds', String(total));
+            localStorage.removeItem('miningStart');
+            state.isMining = false;
+            if (state.miningInterval) clearInterval(state.miningInterval);
+            state.elapsedSeconds = total;
+            updateMiningUI();
+        }
+
+        function startMiningInterval() {
+            if (state.miningInterval) {
+                clearInterval(state.miningInterval);
+            }
+
+            state.miningInterval = setInterval(() => {
+                checkMidnightReset();
+                const total = getTodaySeconds();
+                state.elapsedSeconds = total;
+                updateMiningUI();
+
+                // Award point when target reached
+                if (total >= MINING_TARGET_SECONDS) {
+                    const awarded = localStorage.getItem('todayPointAwarded');
+                    const today = new Date().toDateString();
+                    if (awarded !== today) {
+                        state.points = parseInt(localStorage.getItem('totalPoints') || '0') + 1;
+                        localStorage.setItem('totalPoints', String(state.points));
+                        localStorage.setItem('todayPointAwarded', today);
+                        updatePoints();
+                    }
+                    stopMining();
+                }
+            }, 1000);
+        }
+
+        function updateMiningUI() {
+            const miningCircle = document.getElementById('miningCircle');
+            const status = document.getElementById('miningStatus');
+            const startBtn = document.getElementById('startMiningBtn');
+            const stopBtn = document.getElementById('stopMiningBtn');
+            const timeDisplay = document.getElementById('timeDisplay');
+            const progressBar = document.getElementById('progressBar');
+            const remainingText = document.getElementById('remainingText');
+
+            const targetReached = isTargetReached();
+
+            if (targetReached) {
+                miningCircle.classList.remove('active');
+                status.textContent = t('dailyTargetReached');
+                startBtn.classList.add('hidden');
+                stopBtn.classList.add('hidden');
+            } else if (state.isMining) {
+                miningCircle.classList.add('active');
+                status.textContent = t('miningInProgress');
+                startBtn.classList.add('hidden');
+                stopBtn.classList.remove('hidden');
+            } else {
+                miningCircle.classList.remove('active');
+                status.textContent = t('tapToStart');
+                startBtn.classList.remove('hidden');
+                stopBtn.classList.add('hidden');
+            }
+
+            timeDisplay.textContent = formatTime(state.elapsedSeconds);
+
+            const progressPercent = Math.min((state.elapsedSeconds / MINING_TARGET_SECONDS) * 100, 100);
+            progressBar.style.width = progressPercent + '%';
+
+            const remaining = Math.max(MINING_TARGET_SECONDS - state.elapsedSeconds, 0);
+            remainingText.textContent = targetReached 
+                ? t('targetComplete')
+                : t('remaining') + ': ' + formatTime(remaining);
+        }
+
+        function formatTime(totalSeconds) {
+            const h = String(Math.floor(totalSeconds / 3600)).padStart(2, '0');
+            const m = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, '0');
+            const s = String(totalSeconds % 60).padStart(2, '0');
+            return `${h}:${m}:${s}`;
+        }
+
+        // Recharge Page Functions
+        function initRechargePage() {
+            const mobileInput = document.getElementById('mobileInput');
+            const charCount = document.getElementById('charCount');
+
+            mobileInput.addEventListener('input', (e) => {
+                e.target.value = e.target.value.replace(/\D/g, '');
+                charCount.textContent = e.target.value.length + '/10';
+            });
+
+            updateRechargeHistory();
+        }
+
+        function handleRecharge() {
+            const mobile = document.getElementById('mobileInput').value;
+            const messageEl = document.getElementById('rechargeMessage');
+
+            if (mobile.length !== 10) {
+                showMessage(messageEl, t('validNumber'), 'error');
+                return;
+            }
+
+            if (state.points < 28) {
+                showMessage(messageEl, t('notEnoughPoints'), 'error');
+                return;
+            }
+
+            state.points -= 28;
+            localStorage.setItem('totalPoints', String(state.points));
+
+            const entry = {
+                number: mobile,
+                date: new Date().toLocaleDateString()
+            };
+
+            const history = JSON.parse(localStorage.getItem('rechargeHistory') || '[]');
+            history.unshift(entry);
+            localStorage.setItem('rechargeHistory', JSON.stringify(history));
+
+            const recharges = parseInt(localStorage.getItem('totalRecharges') || '0') + 1;
+            localStorage.setItem('totalRecharges', String(recharges));
+
+            document.getElementById('mobileInput').value = '';
+            document.getElementById('charCount').textContent = '0/10';
+
+            updatePoints();
+            updateRechargeHistory();
+            showMessage(messageEl, t('rechargeSuccess'), 'success');
+        }
+
+        function showMessage(element, message, type) {
+            element.textContent = message;
+            element.className = 'message ' + type;
+            element.classList.remove('hidden');
+
+            setTimeout(() => {
+                element.classList.add('hidden');
+            }, 3000);
+        }
+
+        function updateRechargeHistory() {
+            const container = document.getElementById('historyContainer');
+            const history = JSON.parse(localStorage.getItem('rechargeHistory') || '[]');
+
+            if (history.length === 0) {
+                container.innerHTML = `<p class="empty-state">${t('noHistory')}</p>`;
+                return;
+            }
+
+            container.innerHTML = history.map(h => `
+                <div class="history-item">
+                    <span class="history-number">${h.number}</span>
+                    <span class="history-date">${h.date}</span>
+                </div>
+            `).join('');
+        }
+
+        // Profile Page Functions
+        function initProfilePage() {
+            updateProfile();
+        }
+
+        function updateProfile() {
+            const username = localStorage.getItem('username') || 'User';
+            document.getElementById('usernameDisplay').textContent = username;
+            document.getElementById('usernameInput').value = username;
+            
+            const avatarUrl = localStorage.getItem('avatarUrl');
+            const avatarContainer = document.getElementById('avatarContainer');
+            
+            if (avatarUrl) {
+                avatarContainer.innerHTML = `<img src="${avatarUrl}" alt="Avatar" style="width: 100%; height: 100%; object-fit: cover;">`;
+            } else {
+                avatarContainer.innerHTML = `<span id="avatarLetter">${username.charAt(0).toUpperCase()}</span>`;
+            }
+
+            const activeDays = JSON.parse(localStorage.getItem('activeDays') || '[]').length;
+            const recharges = parseInt(localStorage.getItem('totalRecharges') || '0');
+
+            document.getElementById('activeDays').textContent = activeDays;
+            document.getElementById('totalRecharges').textContent = recharges;
+        }
+
+        function toggleEditUsername() {
+            const display = document.getElementById('usernameDisplay');
+            const input = document.getElementById('usernameInput');
+
+            if (display.classList.contains('hidden')) {
+                // Save
+                const newUsername = input.value.trim() || 'User';
+                localStorage.setItem('username', newUsername);
+                display.textContent = newUsername;
+                
+                const avatarUrl = localStorage.getItem('avatarUrl');
+                if (!avatarUrl) {
+                    document.getElementById('avatarLetter').textContent = newUsername.charAt(0).toUpperCase();
+                }
+                
+                display.classList.remove('hidden');
+                input.classList.add('hidden');
+            } else {
+                // Edit
+                display.classList.add('hidden');
+                input.classList.remove('hidden');
+                input.focus();
+            }
+        }
+
+        function handleAvatarUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const avatarUrl = e.target.result;
+                localStorage.setItem('avatarUrl', avatarUrl);
+                updateProfile();
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // Settings Page Functions
+        function initSettingsPage() {
+            const languages = ['English', 'हिन्दी', 'ਪੰਜਾਬੀ', 'Español', 'Français'];
+            const currentLang = state.currentLanguage;
+
+            const languageGrid = document.getElementById('languageGrid');
+            languageGrid.innerHTML = languages.map(lang => `
+                <button 
+                    class="language-btn ${lang === currentLang ? 'active' : ''}" 
+                    onclick="selectLanguage('${lang}')"
+                >
+                    ${lang}
+                </button>
+            `).join('');
+        }
+
+        function toggleLanguageSelector() {
+            const content = document.getElementById('languageContent');
+            const chevron = document.getElementById('langChevron');
+            content.classList.toggle('show');
+            chevron.classList.toggle('rotate');
+        }
+
+        function selectLanguage(lang) {
+            state.currentLanguage = lang;
+            localStorage.setItem('language', lang);
+            initSettingsPage();
+            updateTranslations();
+            toggleLanguageSelector();
+        }
+
+        function togglePasswordForm() {
+            const content = document.getElementById('passwordContent');
+            const chevron = document.getElementById('pwChevron');
+            content.classList.toggle('show');
+            chevron.classList.toggle('rotate');
+        }
+
+        function handleChangePassword() {
+            const currentPw = document.getElementById('currentPassword').value;
+            const newPw = document.getElementById('newPassword').value;
+            const messageEl = document.getElementById('passwordMessage');
+
+            const savedPw = localStorage.getItem('userPassword') || '';
+            if (savedPw && currentPw !== savedPw) {
+                showMessage(messageEl, t('incorrectPassword'), 'error');
+                return;
+            }
+
+            if (newPw.length < 4) {
+                showMessage(messageEl, t('passwordTooShort'), 'error');
+                return;
+            }
+
+            localStorage.setItem('userPassword', newPw);
+            showMessage(messageEl, t('passwordChanged'), 'success');
+            
+            document.getElementById('currentPassword').value = '';
+            document.getElementById('newPassword').value = '';
+
+            setTimeout(() => {
+                messageEl.classList.add('hidden');
+                togglePasswordForm();
+            }, 2000);
+        }
+
+        function handleLogout() {
+            if (confirm('Are you sure you want to logout? This will reset your mining session.')) {
+                localStorage.removeItem('miningStart');
+                localStorage.removeItem('todayMiningSeconds');
+                localStorage.removeItem('lastMiningReset');
+                localStorage.removeItem('todayPointAwarded');
+                window.location.reload();
+            }
+        }
+
+        // Navigation
+        function switchTab(tabName) {
+            // Hide all pages
+            document.querySelectorAll('.page').forEach(page => {
+                page.classList.remove('active');
+            });
+
+            // Show selected page
+            document.getElementById(tabName).classList.add('active');
+
+            // Update nav buttons
+            document.querySelectorAll('nav button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.currentTarget.classList.add('active');
+
+            // Update page-specific content
+            if (tabName === 'profile') {
+                updateProfile();
+            }
+        }
+
+        // Update points across all pages
+        function updatePoints() {
+            document.getElementById('homePoints').textContent = state.points;
+            document.getElementById('rechargePoints').textContent = state.points;
+            document.getElementById('profilePoints').textContent = state.points;
+        }
+
+        // Initialize on load
+        init();
+    </script>
+</body>
+</html>
